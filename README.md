@@ -22,7 +22,7 @@ Ported from the Rock 5T Nerves system — both boards share the RK3588 SoC, so G
 | **HDMI Input** | V4L2 (rk_hdmirx) | Up to 4K60 capture |
 | **NVMe** | M.2 M-Key PCIe 3.0 x4 | NVMe SSD support |
 | **SPI NOR** | QSPI (16/32 MB) | On-board SPI NOR flash |
-| **GPIO** | sysfs / libgpiod | 26-pin header with SPI, I2C, UART, PWM |
+| **GPIO** | sysfs / libgpiod | 40-pin header with SPI, I2C, UART, PWM |
 
 ## Hardware Differences from Rock 5T
 
@@ -54,9 +54,9 @@ The Orange Pi 5 Plus has an M.2 E-Key slot for optional WiFi/BT modules. Both co
 | AP6275P | BCM43752 | brcmfmac (in-tree) | `brcmfmac-ap6275p` (custom) |
 | RTL8852BE | RTL8852BE | rtw89 (out-of-tree) | `linux-firmware` |
 
-## 26-Pin GPIO Header
+## 40-Pin GPIO Header
 
-The Orange Pi 5 Plus has a 26-pin GPIO header (not 40-pin like the Rock 5T). Pin assignments differ — consult the [Orange Pi 5 Plus schematic](http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/details/Orange-Pi-5-plus.html) for your board revision.
+The Orange Pi 5 Plus has a 40-pin GPIO header with SPI, I2C, UART, and PWM. Pin assignments differ from the Rock 5T — consult the [Orange Pi 5 Plus schematic](http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/details/Orange-Pi-5-plus.html) for your board revision.
 
 ### Serial Console
 
