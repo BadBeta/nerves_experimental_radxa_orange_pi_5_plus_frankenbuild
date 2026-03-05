@@ -56,7 +56,7 @@ The Orange Pi 5 Plus has an M.2 E-Key slot for optional WiFi/BT modules. Both co
 
 ## 40-Pin GPIO Header
 
-The Orange Pi 5 Plus has a 40-pin GPIO header with SPI, I2C, UART, and PWM. Pin assignments differ from the Rock 5T — consult the [Orange Pi 5 Plus schematic](http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/details/Orange-Pi-5-plus.html) for your board revision.
+The Orange Pi 5 Plus has a 40-pin GPIO header with SPI, I2C, UART, and PWM. Pin assignments might differ from the Rock 5T — consult the [Orange Pi 5 Plus schematic](http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/details/Orange-Pi-5-plus.html) for your board revision.
 
 ### Serial Console
 
