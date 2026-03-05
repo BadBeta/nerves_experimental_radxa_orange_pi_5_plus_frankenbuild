@@ -136,8 +136,8 @@ cat > "${BOOT_CMD}" << EOF
 #
 # This script reads nerves_fw_active from U-Boot env to determine
 # which rootfs partition to boot from:
-#   active=a -> root=/dev/mmcblk0p2 (rootfs-a, GPT partition 1)
-#   active=b -> root=/dev/mmcblk0p3 (rootfs-b, GPT partition 2)
+#   active=a -> root=/dev/mmcblk1p2 (rootfs-a, GPT partition 1)
+#   active=b -> root=/dev/mmcblk1p3 (rootfs-b, GPT partition 2)
 #
 # The boot FAT partition (kernel, DTB, boot.scr) is always GPT partition 0
 # (mmc 0:1 in U-Boot). fwup rewrites the GPT to point partition 0 at
@@ -153,20 +153,20 @@ if test -z "\${fdt_addr_r}"; then
     setenv fdt_addr_r 0x08300000
 fi
 
-# Boot device (eMMC = 0)
+# Boot device (MicroSD = 1)
 if test -z "\${devnum}"; then
-    setenv devnum 0
+    setenv devnum 1
 fi
 
 # ============================================================
 # Determine active slot (A/B) from U-Boot environment
 # ============================================================
-# Load the Nerves U-Boot env block from eMMC.
+# Load the Nerves U-Boot env block from MicroSD.
 # The env is at sector ${UBOOT_ENV_SECTOR} (${UBOOT_ENV_SIZE} bytes).
 # fwup writes standard U-Boot env format (CRC32 + key=value pairs).
 setenv nerves_fw_active
 
-# Try reading env from eMMC and importing it
+# Try reading env from MicroSD and importing it
 if mmc dev \${devnum}; then
     if mmc read 0x02000000 ${UBOOT_ENV_SECTOR} ${UBOOT_ENV_SECTORS}; then
         env import -b 0x02000000 ${UBOOT_ENV_SIZE} nerves_fw_active
@@ -175,10 +175,10 @@ fi
 
 # Select rootfs partition based on active slot
 if test "\${nerves_fw_active}" = "b"; then
-    setenv nerves_root /dev/mmcblk0p3
+    setenv nerves_root /dev/mmcblk1p3
     echo "Active slot: B (rootfs-b)"
 else
-    setenv nerves_root /dev/mmcblk0p2
+    setenv nerves_root /dev/mmcblk1p2
     setenv nerves_fw_active a
     echo "Active slot: A (rootfs-a)"
 fi

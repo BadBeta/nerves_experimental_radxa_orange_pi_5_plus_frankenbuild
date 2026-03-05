@@ -106,19 +106,27 @@ mix firmware
 
 The kernel DTS patch at `patches/linux/0001-arm64-dts-rockchip-add-orange-pi-5-plus-device-tree.patch` is a **placeholder**. You must populate it with the actual Orange Pi 5 Plus device tree files before building. See the instructions in the patch file header.
 
-### Flash via Maskrom Mode
+### Flash to MicroSD Card
 
-With the device in maskrom mode (hold maskrom button, power on):
+Use the standard Nerves workflow to burn firmware to a MicroSD card:
 
 ```bash
-./flash_emmc.sh
+mix deps.get
+mix firmware
+mix burn
 ```
 
-This uses `rkdeveloptool` to write the firmware image to eMMC.
+Or use `fwup` directly:
+
+```bash
+fwup -a -d /dev/sdX -i _build/orangepi5plus_dev/nerves/images/your_app.fw -t complete
+```
+
+Replace `/dev/sdX` with your SD card reader device (check with `lsblk`).
 
 ## Partition Layout (GPT)
 
-> **Note:** The partition layout in `fwup.conf` defaults to a 64GB eMMC module. The `APP_PART_COUNT` must be adjusted for your eMMC module size (16/32/64/128/256 GB). See the comments in `fwup.conf`.
+> **Note:** The partition layout in `fwup.conf` defaults to a 32GB MicroSD card. The `APP_PART_COUNT` must be adjusted for your card size (16/32/64/128 GB). See the comments in `fwup.conf`.
 
 | Region | Offset | Size | Description |
 |--------|--------|------|-------------|
@@ -129,18 +137,18 @@ This uses `rkdeveloptool` to write the firmware image to eMMC.
 | Rootfs A/B | 160 MB | 1 GB each | SquashFS (read-only) |
 | App data | ~2.2 GB | ~55.5 GB | EXT4 (persistent /data) |
 
-## Booting from MicroSD Card
+## Booting from eMMC
 
-The default configuration targets eMMC (`/dev/mmcblk0`). To boot from a MicroSD card instead:
+The default configuration targets MicroSD (`/dev/mmcblk1`). To boot from eMMC instead:
 
 | File | Change |
 |------|--------|
-| `fwup.conf` | Change `NERVES_FW_DEVPATH` to `/dev/mmcblk1` |
-| `fwup.conf` | Adjust `APP_PART_COUNT` for the SD card's capacity |
-| `rootfs_overlay/etc/erlinit.config` | Change boot mount from `/dev/mmcblk0p1` to `/dev/mmcblk1p1` |
-| `post-createfs.sh` | Change `mmcblk0p2`/`mmcblk0p3` root device references to `mmcblk1p*` |
+| `fwup.conf` | Change `NERVES_FW_DEVPATH` to `/dev/mmcblk0` |
+| `fwup.conf` | Adjust `APP_PART_COUNT` for the eMMC module's capacity |
+| `rootfs_overlay/etc/erlinit.config` | Change boot mount from `/dev/mmcblk1p1` to `/dev/mmcblk0p1` |
+| `post-createfs.sh` | Change `mmcblk1p2`/`mmcblk1p3` root device references to `mmcblk0p*`, set `devnum 0` |
 
-On RK3588, eMMC is `mmcblk0` and MicroSD is `mmcblk1`. Flash to SD card using `fwup` or `mix burn` instead of `flash_emmc.sh`.
+On RK3588, eMMC is `mmcblk0` and MicroSD is `mmcblk1`. Flash to eMMC using `rkdeveloptool` in maskrom mode (see `flash_emmc.sh` in git history).
 
 ## License
 
