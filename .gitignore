@@ -1,0 +1,18 @@
+# Build artifacts
+_build/
+deps/
+dl/
+.nerves/
+build.log
+build_wpe.log
+
+# Firmware images
+*.fw
+*.img
+
+# Elixir
+erl_crash.dump
+
+# Test app build artifacts
+test_app/_build/
+test_app/deps/

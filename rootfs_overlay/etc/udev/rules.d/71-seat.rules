@@ -1,0 +1,17 @@
+# Seat device tagging for seatd/libseat
+# These rules tag devices so seatd knows which devices belong to the seat
+# ID_SEAT tells libseat which seat the device belongs to
+
+# Tag all DRM devices for seat
+SUBSYSTEM=="drm", KERNEL=="card[0-9]*", TAG+="seat", TAG+="master-of-seat", ENV{ID_SEAT}="seat0"
+
+# Tag all input devices for seat
+SUBSYSTEM=="input", KERNEL=="event[0-9]*", TAG+="seat", ENV{ID_SEAT}="seat0"
+SUBSYSTEM=="input", KERNEL=="mice", TAG+="seat", ENV{ID_SEAT}="seat0"
+SUBSYSTEM=="input", KERNEL=="mouse[0-9]*", TAG+="seat", ENV{ID_SEAT}="seat0"
+
+# Tag all framebuffer devices for seat
+SUBSYSTEM=="graphics", KERNEL=="fb[0-9]*", TAG+="seat", ENV{ID_SEAT}="seat0"
+
+# Sound devices (for potential audio routing)
+SUBSYSTEM=="sound", TAG+="seat", ENV{ID_SEAT}="seat0"

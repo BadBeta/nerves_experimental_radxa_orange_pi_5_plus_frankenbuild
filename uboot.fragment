@@ -1,0 +1,46 @@
+# U-Boot configuration fragment for Orange Pi 5 Plus Nerves
+#
+# These settings are merged with the mainline orangepi-5-plus-rk3588 defconfig
+
+# Boot configuration
+CONFIG_BOOTDELAY=1
+CONFIG_AUTOBOOT=y
+CONFIG_USE_BOOTCOMMAND=y
+
+# Environment settings
+CONFIG_ENV_SIZE=0x20000
+CONFIG_ENV_OFFSET=0x01000000
+CONFIG_ENV_IS_NOWHERE=y
+CONFIG_ENV_IS_IN_MMC=y
+
+# FAT filesystem support for boot partition
+CONFIG_FS_FAT=y
+CONFIG_FAT_WRITE=y
+CONFIG_FS_EXT4=y
+CONFIG_EXT4_WRITE=y
+
+# USB boot support
+CONFIG_CMD_USB=y
+CONFIG_USB_HOST=y
+
+# Network boot support
+CONFIG_CMD_NET=y
+CONFIG_CMD_DHCP=y
+CONFIG_CMD_TFTPBOOT=y
+CONFIG_CMD_NFS=y
+
+# Boot image formats
+CONFIG_FIT=y
+CONFIG_FIT_VERBOSE=y
+CONFIG_LEGACY_IMAGE_FORMAT=y
+
+# EFI support (optional but useful)
+CONFIG_EFI_LOADER=y
+CONFIG_CMD_BOOTEFI=y
+
+# Device tree
+CONFIG_OF_LIBFDT=y
+CONFIG_OF_LIBFDT_OVERLAY=y
+
+# Console
+CONFIG_BAUDRATE=1500000

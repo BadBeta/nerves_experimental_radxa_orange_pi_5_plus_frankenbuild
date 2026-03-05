@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Vidar <vidar@localhost>
+Date: Wed, 5 Feb 2026 00:00:00 +0000
+Subject: [PATCH] dispatch: use RTLD_GLOBAL when loading GPU libraries
+
+Proprietary GPU drivers (notably ARM Mali-G610) require RTLD_GLOBAL
+visibility for their EGL/GLES shared libraries. Mali exposes extension
+functions only through eglGetProcAddress (not as dynamic symbols), and
+the returned function pointers reference internal symbols that must be
+globally visible to resolve correctly.
+
+With RTLD_LOCAL (the default), libepoxy loads the GPU library but its
+symbols remain hidden. This causes:
+  - eglGetProcAddress to fail or return stubs
+  - EGL initialization failures in programs using libepoxy dispatch
+  - Crashes in multi-process architectures (e.g. Cog/WPE) where both
+    the compositor and renderer link against libepoxy
+
+Weston works around this by linking gl-renderer.so directly against
+libmali.so (loaded as a direct dependency with RTLD_GLOBAL). Programs
+using libepoxy for EGL dispatch do not get this benefit.
+
+Change RTLD_LOCAL to RTLD_GLOBAL so that GPU library symbols are
+available for internal cross-reference resolution.
+
+Signed-off-by: Vidar <vidar@localhost>
+---
+ src/dispatch_common.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/dispatch_common.c b/src/dispatch_common.c
+index 1234567..abcdefg 100644
+--- a/src/dispatch_common.c
++++ b/src/dispatch_common.c
+@@ -305,7 +305,7 @@
+ #else
+     pthread_mutex_lock(&api.mutex);
+     if (!*handle) {
+-        int flags = RTLD_LAZY | RTLD_LOCAL;
++        int flags = RTLD_LAZY | RTLD_GLOBAL;
+         if (!load)
+             flags |= RTLD_NOLOAD;
+

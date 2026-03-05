@@ -1,0 +1,8 @@
+obj-m += rknpu.o
+
+ccflags-y += -I$(src)/include
+
+rknpu-y += rknpu_drv.o
+rknpu-y += rknpu_job.o
+rknpu-y += rknpu_reset.o
+rknpu-y += rknpu_mem_simple.o

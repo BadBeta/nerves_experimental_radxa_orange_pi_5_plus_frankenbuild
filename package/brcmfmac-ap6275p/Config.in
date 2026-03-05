@@ -1,0 +1,13 @@
+config BR2_PACKAGE_BRCMFMAC_AP6275P
+	bool "brcmfmac-ap6275p"
+	help
+	  Broadcom AP6275P (BCM43752) WiFi/Bluetooth firmware files
+	  for the brcmfmac kernel driver.
+
+	  Downloads firmware from the armbian/firmware repository:
+	    - brcmfmac43752-pcie.bin
+	    - brcmfmac43752-pcie.clm_blob
+	    - brcmfmac43752-pcie.txt (NVRAM for Orange Pi 5 Plus)
+
+	  The AP6275P is an optional M.2 E-Key WiFi/BT module
+	  available for the Orange Pi 5 Plus.

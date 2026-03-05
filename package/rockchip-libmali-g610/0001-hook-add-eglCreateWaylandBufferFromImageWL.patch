@@ -1,0 +1,126 @@
+Wire up eglCreateWaylandBufferFromImageWL, eglCreateImageKHR, and
+eglDestroyImageKHR for zero-copy dmabuf compositing.
+
+Also fix load_mali_symbols constructor to dlopen the blob when it's not
+already loaded (needed when libgbm.so symlinks to hook instead of blob).
+
+--- a/hook/hook.c	2026-02-27 17:04:30.919568435 +0100
++++ b/hook/hook.c	2026-02-27 17:05:32.555197010 +0100
+@@ -45,6 +45,17 @@
+ #include <X11/Xlibint.h>
+ #endif
+ 
++
++#if defined(HAS_WAYLAND) && defined(HAS_EGL) && defined(HAS_GBM)
++/* Wayland buffer export -- implementation in hook_wayland_buffer.c */
++struct wl_display;
++struct wl_buffer;
++extern struct wl_display *hook_wl_display;
++extern struct wl_buffer *hook_eglCreateWaylandBufferFromImageWL(EGLDisplay dpy, EGLImageKHR image);
++extern EGLImageKHR hook_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
++                                           EGLClientBuffer buffer, const EGLint *attribs);
++extern EGLBoolean hook_eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image);
++#endif
+ #ifndef ARRAY_SIZE
+ #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+ #endif
+@@ -184,7 +195,12 @@
+    /* The libmali should be already loaded */
+    handle = dlopen(LIBMALI_SO, RTLD_LAZY | RTLD_NOLOAD);
+    if (!handle) {
+-      /* Should not reach here */
++      /* When hook IS libgbm.so (not LD_PRELOAD'd), the blob may not be
++       * loaded yet.  Try a regular dlopen to load it ourselves. */
++      handle = dlopen(LIBMALI_SO, RTLD_LAZY);
++   }
++   if (!handle) {
++      /* Neither NOLOAD nor regular dlopen worked */
+       fprintf(stderr, "[MALI-HOOK] FATAL: dlopen(" LIBMALI_SO ") failed(%s)\n",
+               dlerror());
+       exit(-1);
+@@ -198,7 +214,12 @@
+ 
+       symbol = dlsym(handle, func);
+       if (!symbol) {
+-         /* Should not reach here */
++      /* When hook IS libgbm.so (not LD_PRELOAD'd), the blob may not be
++       * loaded yet.  Try a regular dlopen to load it ourselves. */
++      handle = dlopen(LIBMALI_SO, RTLD_LAZY);
++   }
++   if (!handle) {
++      /* Neither NOLOAD nor regular dlopen worked */
+          fprintf(stderr, "[MALI-HOOK] FATAL: " LIBMALI_SO
+                  " dlsym(%s) failed(%s)\n", func, dlerror());
+          exit(-1);
+@@ -703,6 +724,13 @@
+ EGLAPI EGLDisplay EGLAPIENTRY
+ eglGetDisplay (EGLNativeDisplayType display_id)
+ {
++#if defined(HAS_WAYLAND) && defined(HAS_EGL) && defined(HAS_GBM)
++   /* Capture wl_display for eglCreateWaylandBufferFromImageWL.
++    * Cog 0.18 calls eglGetDisplay(wl_display) instead of eglGetPlatformDisplay. */
++   if (display_id != EGL_DEFAULT_DISPLAY && !hook_wl_display)
++      hook_wl_display = (struct wl_display *)(void *)display_id;
++#endif
++
+    const char *type = getenv("MALI_DEFAULT_WINSYS");
+    EGLDisplay display;
+ 
+@@ -796,6 +824,11 @@
+ EGLAPI EGLDisplay EGLAPIENTRY
+ eglGetPlatformDisplay(EGLenum platform, void *native_display, const EGLAttrib *attrib_list)
+ {
++#if defined(HAS_WAYLAND) && defined(HAS_GBM)
++   /* Capture wl_display for eglCreateWaylandBufferFromImageWL */
++   if (platform == EGL_PLATFORM_WAYLAND_EXT && native_display)
++      hook_wl_display = (struct wl_display *)native_display;
++#endif
+    if (_eglGetPlatformDisplayEXT) {
+       EGLint *int_attribs = _eglConvertAttribsToInt(attrib_list);
+       if (!int_attribs == !attrib_list) {
+@@ -939,7 +972,45 @@
+    if (!strcmp(procname, "eglDestroySurface"))
+       return (__eglMustCastToProperFunctionPointerType)eglDestroySurface;
+ 
++#if defined(HAS_WAYLAND) && defined(HAS_GBM)
++   if (!strcmp(procname, "eglCreateWaylandBufferFromImageWL"))
++      return (__eglMustCastToProperFunctionPointerType)hook_eglCreateWaylandBufferFromImageWL;
++   if (!strcmp(procname, "eglCreateImageKHR"))
++      return (__eglMustCastToProperFunctionPointerType)hook_eglCreateImageKHR;
++   if (!strcmp(procname, "eglDestroyImageKHR"))
++      return (__eglMustCastToProperFunctionPointerType)hook_eglDestroyImageKHR;
++#endif
++
+    return _eglGetProcAddress(procname);
+ }
+ 
++
++/* Symbol-level wrappers — WPE-FDO calls these as linked symbols,
++ * not via eglGetProcAddress. */
++#if defined(HAS_WAYLAND) && defined(HAS_EGL) && defined(HAS_GBM)
++
++EGLAPI EGLImageKHR EGLAPIENTRY
++eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
++                  EGLClientBuffer buffer, const EGLint *attrib_list)
++{
++   return hook_eglCreateImageKHR(dpy, ctx, target, buffer, attrib_list);
++}
++
++EGLAPI EGLBoolean EGLAPIENTRY
++eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
++{
++   return hook_eglDestroyImageKHR(dpy, image);
++}
++
++/* Cog's WL platform module links against libmali.so.1 (the blob), so its
++ * eglGetProcAddress call goes to the blob — which doesn't know about this
++ * extension.  Export it as a direct symbol so dlsym(RTLD_NEXT, ...) finds it. */
++struct wl_buffer *
++eglCreateWaylandBufferFromImageWL(EGLDisplay dpy, EGLImageKHR image)
++{
++   return hook_eglCreateWaylandBufferFromImageWL(dpy, image);
++}
++
++#endif /* HAS_WAYLAND && HAS_EGL && HAS_GBM */
++
+ #endif // HAS_EGL

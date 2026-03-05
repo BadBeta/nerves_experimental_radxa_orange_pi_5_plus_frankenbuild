@@ -1,0 +1,22 @@
+From: Build Fix <noreply@example.com>
+Date: Wed, 5 Feb 2026 21:00:00 +0000
+Subject: [PATCH] Fix cmake_minimum_required for CMake 4.x compatibility
+
+CMake 4.x removed compatibility with cmake_minimum_required < 3.5.
+Update to 3.5 to fix build with newer CMake versions.
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -26,7 +26,7 @@
+ # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+-cmake_minimum_required(VERSION 3.1)
++cmake_minimum_required(VERSION 3.5)
+ project(Snappy VERSION 1.2.1 LANGUAGES C CXX)
+
+ # C++ standard can be overridden when this is used as a sub-project.

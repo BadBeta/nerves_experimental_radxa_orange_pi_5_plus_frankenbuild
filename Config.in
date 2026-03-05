@@ -1,0 +1,21 @@
+# Add project-specific packages for Buildroot here
+#
+# If these are non-proprietary, please consider contributing them back to
+# Nerves or Buildroot.
+
+menu "Orange Pi 5 Plus Hardware Acceleration"
+
+source "$NERVES_DEFCONFIG_DIR/package/rockchip-libmali-g610/Config.in"
+source "$NERVES_DEFCONFIG_DIR/package/rockchip-mpp/Config.in"
+source "$NERVES_DEFCONFIG_DIR/package/rockchip-rknpu2/Config.in"
+source "$NERVES_DEFCONFIG_DIR/package/rknpu/Config.in"
+source "$NERVES_DEFCONFIG_DIR/package/rtw89-oot/Config.in"
+source "$NERVES_DEFCONFIG_DIR/package/brcmfmac-ap6275p/Config.in"
+
+endmenu
+
+menu "Orange Pi 5 Plus Application Packages"
+
+source "$NERVES_DEFCONFIG_DIR/package/gstreamer-rockchip/Config.in"
+
+endmenu

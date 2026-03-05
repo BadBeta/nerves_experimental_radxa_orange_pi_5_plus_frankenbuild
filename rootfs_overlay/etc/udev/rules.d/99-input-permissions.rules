@@ -1,0 +1,11 @@
+# Ensure input devices are accessible
+# Nerves runs as root, but libseat/weston needs proper permissions
+
+# Input devices (keyboard, mouse, etc.)
+SUBSYSTEM=="input", MODE="0660", GROUP="root"
+
+# Specifically for event devices
+KERNEL=="event[0-9]*", MODE="0660", GROUP="root"
+
+# DRM devices (for libseat access)
+SUBSYSTEM=="drm", MODE="0660", GROUP="root"

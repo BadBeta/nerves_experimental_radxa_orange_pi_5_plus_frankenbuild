@@ -1,0 +1,153 @@
+/*
+ * Device Tree Overlay: IMX219 (RPi Camera v2) on Orange Pi 5 Plus CAM0
+ *
+ * Sony IMX219 8MP camera module connected to the 4-lane MIPI CSI-2
+ * connector via csi2_dphy0.
+ *
+ * The Orange Pi 5 Plus has one 4-lane MIPI CSI-2 camera connector
+ * (vs two on the Rock 5T).
+ *
+ * IMPORTANT: Adjust GPIO pins and I2C bus for your specific board
+ * revision. The pins below are based on the Orange Pi 5 Plus schematic.
+ *
+ * To compile:
+ *   dtc -@ -I dts -O dtb -o orangepi5plus-camera-imx219.dtbo orangepi5plus-camera-imx219.dts
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "xunlong,orangepi-5-plus", "rockchip,rk3588";
+
+	fragment@0 {
+		target-path = "/";
+		__overlay__ {
+			cam0_regulator: cam0-regulator {
+				compatible = "regulator-fixed";
+				regulator-name = "cam0_supply";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				/* Adjust GPIO for OPi5+ camera power enable */
+				gpio = <&gpio1 14 0>; /* Placeholder — verify with schematic */
+				enable-active-high;
+				regulator-always-on;
+			};
+		};
+	};
+
+	/* Enable MIPI D-PHY for CAM0 */
+	fragment@1 {
+		target = <&csi2_dphy0>;
+		__overlay__ {
+			status = "okay";
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				/* Input from sensor */
+				port@0 {
+					reg = <0>;
+					dphy0_in: endpoint {
+						remote-endpoint = <&imx219_out>;
+						data-lanes = <1 2>;
+						/* For 4-lane, use: data-lanes = <1 2 3 4>; */
+					};
+				};
+
+				/* Output to CIF */
+				port@1 {
+					reg = <1>;
+					dphy0_out: endpoint {
+						remote-endpoint = <&cif_mipi0_in>;
+					};
+				};
+			};
+		};
+	};
+
+	/* Enable D-PHY hardware block */
+	fragment@2 {
+		target = <&csi2_dphy0_hw>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	/* Enable CIF MIPI receiver */
+	fragment@3 {
+		target = <&rkcif_mipi_lvds>;
+		__overlay__ {
+			status = "okay";
+
+			port {
+				cif_mipi0_in: endpoint {
+					remote-endpoint = <&dphy0_out>;
+				};
+			};
+		};
+	};
+
+	/* Enable CIF controller */
+	fragment@4 {
+		target = <&rkcif>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	/* Enable ISP0 for image processing */
+	fragment@5 {
+		target = <&rkisp0>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	/* IMX219 sensor on I2C (adjust bus for your board) */
+	fragment@6 {
+		target = <&i2c3>;
+		__overlay__ {
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			imx219: imx219@10 {
+				compatible = "sony,imx219";
+				reg = <0x10>;
+				clocks = <&cam0_clk>;
+				clock-names = "xclk";
+
+				/* Adjust reset GPIO for OPi5+ */
+				reset-gpios = <&gpio1 13 1>; /* Placeholder — verify with schematic */
+				VANA-supply = <&cam0_regulator>;
+				VDIG-supply = <&cam0_regulator>;
+				VDDL-supply = <&cam0_regulator>;
+
+				port {
+					imx219_out: endpoint {
+						remote-endpoint = <&dphy0_in>;
+						data-lanes = <1 2>;
+						clock-lanes = <0>;
+						clock-noncontinuous;
+						link-frequencies = /bits/ 64 <456000000>;
+					};
+				};
+			};
+		};
+	};
+
+	/* 24 MHz reference clock for the sensor */
+	fragment@7 {
+		target-path = "/";
+		__overlay__ {
+			cam0_clk: cam0-clk {
+				compatible = "fixed-clock";
+				#clock-cells = <0>;
+				clock-frequency = <24000000>;
+				clock-output-names = "cam0_xclk";
+			};
+		};
+	};
+};

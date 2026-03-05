@@ -1,0 +1,32 @@
+--- a/libweston/meson.build
++++ b/libweston/meson.build
+@@ -87,7 +87,7 @@
+ subdir('desktop')
+ subdir('shell-utils')
+
+-dep_gbm = dependency('gbm', required: false, version: '>= 21.1.1')
++dep_gbm = dependency('gbm', required: false, version: '>= 21.1.0')
+
+ if get_option('backend-vnc')
+ 	dep_pam = dependency('pam', required: false)
+--- a/libweston/backend-drm/fb.c
++++ b/libweston/backend-drm/fb.c
+@@ -111,6 +111,18 @@
+ 	}
+ }
+
++/*
++ * Mali GBM compatibility: gbm_bo_get_fd_for_plane was added in Mesa 21.1.1
++ * but Mali's proprietary GBM (21.1.0) declares it in the header without
++ * providing an implementation. This weak fallback satisfies the linker
++ * and delegates to gbm_bo_get_fd for plane 0.
++ */
++__attribute__((weak))
++int gbm_bo_get_fd_for_plane(struct gbm_bo *bo, int plane)
++{
++	return (plane == 0) ? gbm_bo_get_fd(bo) : -1;
++}
++
+ static int
+ drm_fb_import_plane(struct drm_device *device, struct drm_fb *fb, int plane)
+ {

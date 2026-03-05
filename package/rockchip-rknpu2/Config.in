@@ -1,0 +1,23 @@
+config BR2_PACKAGE_ROCKCHIP_RKNPU2
+	bool "rockchip-rknpu2"
+	depends on BR2_aarch64
+	help
+	  Rockchip RKNPU2 runtime library for NPU inference.
+
+	  Provides the RKNN runtime for running neural network models
+	  on the RK3588 6 TOPS NPU.
+
+	  Models must be converted to RKNN format using rknn-toolkit2
+	  on a host PC before deployment.
+
+if BR2_PACKAGE_ROCKCHIP_RKNPU2
+
+config BR2_PACKAGE_ROCKCHIP_RKNPU2_DEMO
+	bool "Install demo programs"
+	help
+	  Install rknn_benchmark and other demo applications.
+
+endif
+
+comment "rockchip-rknpu2 needs an aarch64 toolchain"
+	depends on !BR2_aarch64

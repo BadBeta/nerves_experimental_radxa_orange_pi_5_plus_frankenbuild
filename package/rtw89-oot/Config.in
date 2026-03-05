@@ -1,0 +1,22 @@
+config BR2_PACKAGE_RTW89_OOT
+	bool "rtw89-oot"
+	depends on BR2_LINUX_KERNEL
+	help
+	  Out-of-tree rtw89 driver from lwfinger/rtw89.
+
+	  This provides RTL8852BE WiFi support that is missing from
+	  the Rockchip BSP kernel. The BSP kernel 6.1 has incomplete
+	  stubs for 8852B support - this package provides the complete
+	  driver backported from mainline Linux.
+
+	  Supported chipsets:
+	  - RTL8851BE
+	  - RTL8852AE
+	  - RTL8852BE (optional M.2 E-Key WiFi module)
+	  - RTL8852CE
+	  - RTL8922AE
+
+	  https://github.com/lwfinger/rtw89
+
+comment "rtw89-oot needs a Linux kernel to be built"
+	depends on !BR2_LINUX_KERNEL

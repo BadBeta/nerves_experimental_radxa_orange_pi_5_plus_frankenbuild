@@ -1,0 +1,230 @@
+# nerves_defconfig - Base hardware-only configuration for Orange Pi 5 Plus (BSP 6.1 kernel)
+#
+# Minimal BSP: kernel, GPU, VPU, NPU, networking, audio HAL, Wayland libs.
+# No display compositor, browser, or media pipelines — those go in the app layer.
+# For full display/media stack, use nerves_defconfig_full instead:
+#   NERVES_DEFCONFIG=nerves_defconfig_full MIX_TARGET=orangepi5plus mix firmware
+#
+# U-Boot: mainline v2026.04-rc3 (orangepi-5-plus-rk3588 defconfig)
+# Kernel: Radxa BSP 6.1 + Orange Pi 5 Plus DTS patch
+
+BR2_PACKAGE_NERVES_CONFIG_ACCEPT_RNG_NOTICE=y
+
+# Architecture
+BR2_aarch64=y
+BR2_cortex_a76=y
+
+# Nerves external toolchain (same as RPi5)
+BR2_TOOLCHAIN_EXTERNAL=y
+BR2_TOOLCHAIN_EXTERNAL_CUSTOM=y
+BR2_TOOLCHAIN_EXTERNAL_DOWNLOAD=y
+BR2_TOOLCHAIN_EXTERNAL_URL="https://github.com/nerves-project/toolchains/releases/download/v13.2.0/nerves_toolchain_aarch64_nerves_linux_gnu-linux_x86_64-13.2.0-CE4B5F8.tar.xz"
+BR2_TOOLCHAIN_EXTERNAL_CUSTOM_PREFIX="aarch64-nerves-linux-gnu"
+BR2_TOOLCHAIN_EXTERNAL_GCC_13=y
+# Use 5.4 headers to match the Nerves toolchain (toolchain headers, not kernel version)
+BR2_TOOLCHAIN_EXTERNAL_HEADERS_5_4=y
+BR2_TOOLCHAIN_EXTERNAL_CUSTOM_GLIBC=y
+BR2_TOOLCHAIN_EXTERNAL_CXX=y
+BR2_TOOLCHAIN_EXTERNAL_FORTRAN=y
+BR2_TOOLCHAIN_EXTERNAL_OPENMP=y
+# BR2_TOOLCHAIN_EXTERNAL_INET_RPC is not set
+
+# Build settings
+BR2_TAR_OPTIONS="--no-same-owner"
+BR2_BACKUP_SITE="http://dl.nerves-project.org"
+# BR2_ENABLE_DEBUG is not set
+# BSP 6.1: No kernel patches needed (RKNPU in-tree, no Rocket nodes, no mmu600 issues)
+BR2_GLOBAL_PATCH_DIR="${BR2_EXTERNAL_NERVES_PATH}/patches ${NERVES_DEFCONFIG_DIR}/patches"
+BR2_REPRODUCIBLE=y
+BR2_JLEVEL=4
+
+# System configuration
+BR2_SYSTEM_DHCP="eth0"
+BR2_TARGET_GENERIC_GETTY_PORT="ttyS2"
+BR2_TARGET_GENERIC_GETTY_BAUDRATE_1500000=y
+
+# Nerves required - custom skeleton
+BR2_ROOTFS_SKELETON_CUSTOM=y
+BR2_ROOTFS_SKELETON_CUSTOM_PATH="${BR2_EXTERNAL_NERVES_PATH}/board/nerves-common/skeleton"
+BR2_INIT_NONE=y
+BR2_ROOTFS_DEVICE_TABLE="${BR2_EXTERNAL_NERVES_PATH}/board/nerves-common/device_table.txt"
+BR2_ENABLE_LOCALE_WHITELIST="locale-archive"
+BR2_GENERATE_LOCALE="en_US.UTF-8"
+
+# Kernel - Rockchip BSP 6.1 (linux-rk2410) with in-tree RKNPU
+BR2_LINUX_KERNEL=y
+BR2_LINUX_KERNEL_CUSTOM_TARBALL=y
+BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION="https://github.com/radxa/kernel/archive/refs/heads/linux-6.1-stan-rkr4.1.tar.gz"
+BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
+BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="${NERVES_DEFCONFIG_DIR}/linux-6.1-bsp.defconfig"
+# LZ4 decompresses ~5x faster than XZ (slight size increase)
+BR2_LINUX_KERNEL_LZ4=y
+BR2_LINUX_KERNEL_DTS_SUPPORT=y
+BR2_LINUX_KERNEL_INTREE_DTS_NAME="rockchip/rk3588-orangepi-5-plus"
+BR2_LINUX_KERNEL_NEEDS_HOST_OPENSSL=y
+BR2_LINUX_KERNEL_NEEDS_HOST_LIBELF=y
+
+# U-Boot - Mainline v2026.04-rc3 (has orangepi-5-plus-rk3588 defconfig)
+BR2_TARGET_UBOOT=y
+BR2_TARGET_UBOOT_BUILD_SYSTEM_KCONFIG=y
+BR2_TARGET_UBOOT_CUSTOM_TARBALL=y
+BR2_TARGET_UBOOT_CUSTOM_TARBALL_LOCATION="https://ftp.denx.de/pub/u-boot/u-boot-2026.04-rc3.tar.bz2"
+BR2_TARGET_UBOOT_BOARD_DEFCONFIG="orangepi-5-plus-rk3588"
+BR2_TARGET_UBOOT_FORMAT_ITB=y
+# idbloader.img is created in post-createfs.sh (DDR blob + SPL)
+BR2_TARGET_UBOOT_NEEDS_ATF_BL31=y
+BR2_TARGET_UBOOT_NEEDS_ATF_BL31_ELF=y
+BR2_TARGET_UBOOT_NEEDS_PYLIBFDT=y
+BR2_TARGET_UBOOT_NEEDS_PYELFTOOLS=y
+BR2_TARGET_UBOOT_NEEDS_OPENSSL=y
+
+# Rockchip rkbin blobs (DDR init for U-Boot TPL)
+BR2_PACKAGE_ROCKCHIP_RKBIN=y
+BR2_PACKAGE_ROCKCHIP_RKBIN_TPL_FILENAME="bin/rk35/rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v1.18.bin"
+
+# ARM Trusted Firmware (BL31 for U-Boot)
+BR2_TARGET_ARM_TRUSTED_FIRMWARE=y
+BR2_TARGET_ARM_TRUSTED_FIRMWARE_CUSTOM_VERSION=y
+BR2_TARGET_ARM_TRUSTED_FIRMWARE_CUSTOM_VERSION_VALUE="v2.12"
+BR2_TARGET_ARM_TRUSTED_FIRMWARE_PLATFORM="rk3588"
+BR2_TARGET_ARM_TRUSTED_FIRMWARE_IMAGES="bl31/bl31.elf"
+
+# Filesystem
+BR2_TARGET_ROOTFS_SQUASHFS=y
+BR2_TARGET_ROOTFS_SQUASHFS4_ZSTD=y
+# BR2_TARGET_ROOTFS_TAR is not set
+
+# BusyBox
+BR2_PACKAGE_BUSYBOX_CONFIG="${BR2_EXTERNAL_NERVES_PATH}/board/nerves-common/busybox.config"
+
+# Filesystem tools (for formatting /data partition on first boot)
+BR2_PACKAGE_UTIL_LINUX=y
+BR2_PACKAGE_UTIL_LINUX_LIBUUID=y
+BR2_PACKAGE_E2FSPROGS=y
+BR2_PACKAGE_E2FSPROGS_MKFS=y
+
+# Required packages for Nerves
+BR2_PACKAGE_ERLINIT=y
+BR2_PACKAGE_NERVES_HEART=y
+BR2_PACKAGE_BOARDID=y
+BR2_PACKAGE_NBTTY=y
+
+# Hardware access
+BR2_PACKAGE_LIBGPIOD=y
+BR2_PACKAGE_LIBGPIOD_TOOLS=y
+BR2_PACKAGE_I2C_TOOLS=y
+BR2_PACKAGE_SPI_TOOLS=y
+BR2_PACKAGE_V4L_UTILS=y
+BR2_PACKAGE_DTC=y
+BR2_PACKAGE_LIBMNL=y
+BR2_PACKAGE_LIBDRM=y
+
+# udev (required for device hotplug)
+BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_EUDEV=y
+
+# Wayland libraries (Mali blob dependency, ~200KB)
+BR2_PACKAGE_WAYLAND=y
+BR2_PACKAGE_WAYLAND_PROTOCOLS=y
+
+# ================================================
+# GPU: Proprietary Mali G610 blob (g24p0) + hook library
+# ================================================
+BR2_PACKAGE_ROCKCHIP_LIBMALI_G610=y
+BR2_PACKAGE_ROCKCHIP_LIBMALI_G610_WAYLAND=y
+
+# libepoxy (GPU helper, used by Mali consumers)
+BR2_PACKAGE_LIBEPOXY=y
+
+# DISABLED: Mesa3D — using proprietary Mali blob instead
+# BR2_PACKAGE_MESA3D is not set
+
+# Audio HAL (ALSA only — PulseAudio moves to app layer)
+BR2_PACKAGE_ALSA_LIB=y
+BR2_PACKAGE_ALSA_UTILS=y
+BR2_PACKAGE_ALSA_UTILS_AMIXER=y
+BR2_PACKAGE_ALSA_UTILS_APLAY=y
+BR2_PACKAGE_ALSA_UTILS_SPEAKER_TEST=y
+
+# Core libraries
+BR2_PACKAGE_LIBGLIB2=y
+BR2_PACKAGE_DBUS=y
+BR2_PACKAGE_EXPAT=y
+
+# ================================================
+# Hardware Encoding: Rockchip MPP (H.264/H.265 via RKVENC)
+# ================================================
+BR2_PACKAGE_ROCKCHIP_MPP=y
+BR2_PACKAGE_ROCKCHIP_MPP_VPROC=y
+
+# ================================================
+# NPU: In-tree RKNPU (BSP kernel has CONFIG_ROCKCHIP_RKNPU=y)
+# ================================================
+# DISABLED: Out-of-tree RKNPU — BSP kernel has its own in-tree driver
+# BR2_PACKAGE_RKNPU=y
+
+# RKNN Runtime: librknnrt.so for standard RKNN SDK inference
+BR2_PACKAGE_ROCKCHIP_RKNPU2=y
+# Erlang/OTP
+BR2_PACKAGE_ERLANG=y
+BR2_PACKAGE_ERLANG_SMP=y
+
+# Networking
+BR2_PACKAGE_CA_CERTIFICATES=y
+BR2_PACKAGE_WIRELESS_REGDB=y
+BR2_PACKAGE_WPA_SUPPLICANT=y
+BR2_PACKAGE_WPA_SUPPLICANT_WIRED=y
+BR2_PACKAGE_WPA_SUPPLICANT_AP_SUPPORT=y
+BR2_PACKAGE_WPA_SUPPLICANT_AUTOSCAN=y
+BR2_PACKAGE_WPA_SUPPLICANT_WPA3=y
+BR2_PACKAGE_WPA_SUPPLICANT_CTRL_IFACE=y
+BR2_PACKAGE_IW=y
+
+# Overlay and scripts
+BR2_ROOTFS_OVERLAY="${BR2_EXTERNAL_NERVES_PATH}/board/nerves-common/rootfs_overlay ${NERVES_DEFCONFIG_DIR}/rootfs_overlay"
+BR2_ROOTFS_POST_BUILD_SCRIPT="${NERVES_DEFCONFIG_DIR}/post-build.sh ${BR2_EXTERNAL_NERVES_PATH}/board/nerves-common/post-build.sh"
+BR2_ROOTFS_POST_IMAGE_SCRIPT="${NERVES_DEFCONFIG_DIR}/post-createfs.sh"
+
+# Nerves system identification
+BR2_NERVES_SYSTEM_NAME="nerves_system_orangepi5plus"
+BR2_NERVES_ADDITIONAL_IMAGE_FILES="${NERVES_DEFCONFIG_DIR}/fwup.conf ${NERVES_DEFCONFIG_DIR}/cmdline.txt"
+
+# Nerves config notices
+BR2_PACKAGE_NERVES_CONFIG_ACCEPT_RNG_NOTICE=y
+
+# fwup on target (needed for OTA SSH uploads via nerves_ssh fwup subsystem)
+BR2_PACKAGE_FWUP=y
+
+# Host tools
+BR2_PACKAGE_HOST_KMOD_XZ=y
+BR2_PACKAGE_HOST_SQUASHFS=y
+BR2_PACKAGE_HOST_FWUP=y
+BR2_PACKAGE_HOST_UBOOT_TOOLS=y
+
+# ================================================
+# Firmware
+# ================================================
+BR2_PACKAGE_LINUX_FIRMWARE=y
+
+# RTL8852BE WiFi/Bluetooth firmware (optional M.2 E-Key module)
+BR2_PACKAGE_LINUX_FIRMWARE_RTL_RTW89=y
+BR2_PACKAGE_LINUX_FIRMWARE_RTL_88XX_BT=y
+
+# Broadcom AP6275P (BCM43752) WiFi/BT firmware (optional M.2 E-Key module)
+BR2_PACKAGE_BRCMFMAC_AP6275P=y
+
+# RTL8125BG Ethernet firmware (dual 2.5GbE on Orange Pi 5 Plus)
+BR2_PACKAGE_LINUX_FIRMWARE_RTL_8169=y
+
+# Mali G610 firmware (CSF firmware for mali_kbase driver)
+# Firmware file: arm/mali/arch10.8/mali_csffw.bin
+BR2_PACKAGE_LINUX_FIRMWARE_ARM_MALI_CSF=y
+
+# ================================================
+# WiFi Driver: Out-of-tree RTW89 (lwfinger/rtw89)
+# ================================================
+# BSP 6.1 in-tree RTW89 has only 94-line stubs for RTL8852BE — unusable.
+# Use out-of-tree driver with complete support (for optional RTL8852BE M.2 module).
+BR2_PACKAGE_RTW89_OOT=y
+
+# Broadcom brcmfmac driver is already in-tree (CONFIG_BRCMFMAC=m in kernel config)
+# Firmware is provided by the brcmfmac-ap6275p package above

@@ -1,0 +1,25 @@
+config BR2_PACKAGE_ROCKCHIP_MPP
+	bool "rockchip-mpp"
+	depends on BR2_aarch64 || BR2_arm
+	help
+	  Rockchip Media Process Platform (MPP) library.
+
+	  Provides hardware-accelerated video encoding and decoding
+	  for RK3588 and other Rockchip SoCs.
+
+	  Supported codecs: H.264, H.265/HEVC, VP8, VP9, AV1, MPEG-4, JPEG
+
+if BR2_PACKAGE_ROCKCHIP_MPP
+
+config BR2_PACKAGE_ROCKCHIP_MPP_VPROC
+	bool "Enable video post-processing"
+	default y
+	help
+	  Enable VPROC (video post-processing) support.
+
+config BR2_PACKAGE_ROCKCHIP_MPP_TESTS
+	bool "Install MPP test programs"
+	help
+	  Install mpp_info_test, mpi_dec_test, mpi_enc_test, etc.
+
+endif

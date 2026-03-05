@@ -1,0 +1,9 @@
+config BR2_PACKAGE_RKNPU
+	bool "rknpu"
+	depends on BR2_LINUX_KERNEL
+	help
+	  Rockchip RKNPU kernel driver for RK3588 NPU.
+	  Creates /dev/rknpu misc device for userspace access.
+
+comment "rknpu needs a Linux kernel to be built"
+	depends on !BR2_LINUX_KERNEL

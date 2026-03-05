@@ -1,0 +1,11 @@
+config BR2_PACKAGE_GSTREAMER_ROCKCHIP
+	bool "gstreamer-rockchip"
+	depends on BR2_PACKAGE_ROCKCHIP_MPP
+	depends on BR2_PACKAGE_GSTREAMER1
+	help
+	  GStreamer plugins for Rockchip MPP hardware codecs.
+
+	  Provides mpph264enc, mpph265enc, mppvp8enc, mppjpegenc,
+	  mpph264dec, mpph265dec, and other hardware codec elements.
+
+	  https://github.com/rockchip-linux/gstreamer-rockchip
